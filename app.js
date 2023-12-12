@@ -1,115 +1,78 @@
-var axios = require('axios');
-var ethers = require('ethers')
-var HextoString = require('./utils/HexToString')
-var convertToTweetContent = require('./components/convertToTweetContent')
+const fetchAndProcessTxData = require("./components/fetchAndProcessTxData")
+const randomDelay = require('./utils/randomDelay')
+const tweet = require('./components/tweet')
 
-const kwentaTracking = "0x4b57454e54410000000000000000000000000000000000000000000000000000"
+//fetch interval in minutes
+const fetch_interval = 5
+// lookback period in minutes
+const initial_fetch_lookback_period = 5
+//in USD
+const minimumTradeSize = 5000
 
-const EIGHTEEN_ZEROS = 10 ** 18
+const tweetWithDelay = async (entry) => {
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    await tweet(entry)
+    await delay(0.1 * 60 * 1000 + randomDelay());
+};
 
-
-const query = `
-    query futuresTrades($first: Int, $orderBy: String, $orderDirection: String) {
-        futuresTrades(first: 1000, orderBy: timestamp, orderDirection: desc) {
-        id
-        timestamp
-        account
-        abstractAccount
-        positionSize
-        pnl
-        margin
-        asset
-        trackingCode
-        accountType
-        marketKey
-        orderType
-        size
-        price
-        positionClosed
-        }
+const tweetAllEntries = async (tweetsArray) => {
+    for (const entry of tweetsArray) {
+   
+        await tweetWithDelay(entry);
     }
-`;
+};
 
+const fetchAndTweet = async (initial_fetch_lookback_period, minimumTradeSize) => {
 
+    const tweetsArray = await fetchAndProcessTxData(initial_fetch_lookback_period, minimumTradeSize);
 
-const FetchTxData = async () => {
-
-
-    try {
-
-        const response = await axios.post('https://api.thegraph.com/subgraphs/name/kwenta/optimism-perps', {
-            query: query,
-        })
-
-        if (response.status === 200) {
-            const lastFetchTimestamp = Date.now()
-            return {data : response.data.data.futuresTrades, lastFetchTimestamp: lastFetchTimestamp}
-        }
-      
-
-
-    } catch (err) {
-
-        console.log(err)
-
+    if(tweetsArray) {
+        await tweetAllEntries(tweetsArray);
     }
     
 
+    const timestamp = new Date().toLocaleString();
 
-
+    console.log(tweetsArray, timestamp)
 
 }
-
-const hexString = '0x7345544850455250000000000000000000000000000000000000000000000000'; // hexadecimal representation of "Hello World"
-
-console.log(HextoString(hexString))
 
 
 const main = async () => {
 
-    const startTimestamp = Date.now()
 
-    let {data, lastFetchTimestamp} = await FetchTxData()
+
+    console.log("running")
+
+    //First initial fetch
+    await fetchAndTweet(initial_fetch_lookback_period, minimumTradeSize)
+
+    
+    //Subsequent fetches
+    setInterval( 
+        async() => {
+            fetchAndTweet(fetch_interval, minimumTradeSize)
+    }, fetch_interval * 60 * 1000)
+
+
+      // Handle process exit event
+    process.on('exit', () => {
+        console.log('Exiting program. Clearing interval.');
+        clearInterval(intervalId);
+    });
+
+
+
+
+   
+    
+}
+main()
+
+
     
 
 
-
-    if(!data) return
-    let filteredData = data.filter((entry) => {
-
-        const size = entry.size / EIGHTEEN_ZEROS
-        const price = entry.price / EIGHTEEN_ZEROS
-        const usdvalue = size * price
-
-
-
-
-       return entry.trackingCode === kwentaTracking && usdvalue >= 100000
-
-    })
-
-    console.log(filteredData)
-
-    filteredData.forEach((entry) => {
-
-        const asset = HextoString(entry.asset)
-        const size = entry.size / EIGHTEEN_ZEROS
-        const price = entry.price / EIGHTEEN_ZEROS
-        const usdvalue = size * price
-        const trackingCode = HextoString(entry.trackingCode)
-       
-        let date = new Date(entry.timestamp * 1000)
-
-        const timestamp = date.toLocaleString()
-
-        // console.log(`${asset}, ${size}, ${price}, ${usdvalue}, ${timestamp}`)
-
-        convertToTweetContent(entry)
-
-    })
-
-}
-main()
 
 
 

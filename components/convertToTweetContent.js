@@ -6,8 +6,9 @@ function convertToTweetContent (entry) {
 
     
     const size = entry.size / EIGHTEEN_ZEROS
-    const price = entry.price / EIGHTEEN_ZEROS
+    const price = (entry.price / EIGHTEEN_ZEROS).toFixed(6).toLocaleString('en-US', {style: 'currency', currency : 'USD'})
     const usdvalue = Math.floor(size * price)
+    const account = entry.account
 
     const usdvalue_formatted = usdvalue.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
     
@@ -26,15 +27,18 @@ function convertToTweetContent (entry) {
 
     const posClosed = entry.positionClosed
 
+
+    const kwenta_link = `https://kwenta.eth.limo/market/?asset=${asset}&accountType=smart_margin&wallet=${account}&tab=position`
+
     if(!posClosed) {
-        console.log(`${usdvalue_formatted} $${asset} ${direction}ED @${price} ${timestamp} on https://kwenta.eth.limo/`)
+        return (`${usdvalue_formatted} $${asset} ${direction}ED at $${price}\\n${timestamp} UTC\\n Keep track of this wallet with Kwenta Watcher below 👇\\n\\n${kwenta_link}`)
     } else {
         if (direction === "LONG") {
             direction = "SHORT"
         } else {
             direction = "LONG" 
         }
-        console.log(`${usdvalue_formatted} $${asset} ${direction} CLOSED @${price} ${timestamp}`)
+        return (`${usdvalue_formatted} $${asset} ${direction} CLOSED at $${price}\\n${timestamp} UTC\\nKeep track of this wallet with Kwenta Watcher below 👇\\n\\n${kwenta_link}`)
     }
 
 
