@@ -7,7 +7,7 @@ const fetch_interval = 5
 // lookback period in minutes
 const initial_fetch_lookback_period = 5
 //in USD
-const minimumTradeSize = 5000
+const minimumTradeSize = 1000000
 
 const tweetWithDelay = async (entry) => {
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
