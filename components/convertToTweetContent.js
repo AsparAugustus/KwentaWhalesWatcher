@@ -15,10 +15,17 @@ function convertToTweetContent (entry) {
     let date = new Date(entry.timestamp * 1000)
     const timestamp = date.toLocaleString()
 
+
+    let emoji = "";
+    let upemoji = "📈😎"
+    let downemoji = "📉😱"
     let direction = "";
     if (size >= 0) {
+        emoji = upemoji
         direction = "LONG"
+
     } else {
+        emoji = downemoji
         direction = "SHORT"
     }
 
@@ -27,18 +34,19 @@ function convertToTweetContent (entry) {
 
     const posClosed = entry.positionClosed
 
-
     const kwenta_link = `https://kwenta.eth.limo/market/?asset=${asset}&accountType=smart_margin&wallet=${account}&tab=position`
 
     if(!posClosed) {
-        return (`${usdvalue_formatted} $${asset} ${direction}ED at $${price}\\n${timestamp} UTC\\n Keep track of this wallet with Kwenta Watcher below 👇\\n\\n${kwenta_link}`)
+        return (`${emoji} ${usdvalue_formatted} $${asset} ${direction}ED at $${price}\\n${timestamp} UTC\\n Keep track of this wallet with Kwenta Watcher below 👇\\n\\n${kwenta_link}`)
     } else {
         if (direction === "LONG") {
             direction = "SHORT"
+
         } else {
             direction = "LONG" 
+
         }
-        return (`${usdvalue_formatted} $${asset} ${direction} CLOSED at $${price}\\n${timestamp} UTC\\nKeep track of this wallet with Kwenta Watcher below 👇\\n\\n${kwenta_link}`)
+        return (`${emoji} ${usdvalue_formatted} $${asset} ${direction} CLOSED at $${price}\\n${timestamp} UTC\\nKeep track of this wallet with Kwenta Watcher below 👇\\n\\n${kwenta_link}`)
     }
 
 
